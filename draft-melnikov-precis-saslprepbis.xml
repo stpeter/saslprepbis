@@ -6,11 +6,11 @@
 <?rfc toc="yes"?>
 <?rfc tocdepth="4"?>
 
-<rfc category="std" docName="draft-melnikov-precis-saslprepbis-00" ipr="trust200902" obsoletes="4013">
+<rfc category="std" docName="draft-melnikov-precis-saslprepbis-01" ipr="trust200902" obsoletes="4013">
 
   <front>
 
-    <title abbrev="SASLprep Bis">Username and Password Preparation Algorithms</title>
+    <title abbrev="PRECIS: Usernames and Passwords">Preparation and Comparison of Internationalized Strings Representing Simple User Names and User Secrets</title>
 
     <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
       <organization>Cisco Systems, Inc.</organization>
@@ -51,14 +51,7 @@
     <keyword>SASLprep</keyword>
 
     <abstract>
-      <t>
-        This document describes how to prepare Unicode strings representing
-        user names and passwords, primarily for purposes of comparison.
-        This profile is intended to be used by
-        Simple Authentication and Security Layer (SASL) mechanisms (such as
-        PLAIN and SCRAM-SHA-1), as well as other protocols that
-        exchange simple user names or passwords.  This document obsoletes RFC 
-        4013.</t>
+      <t>This document describes how to prepare Unicode strings representing simple user names and user secrets, primarily for purposes of comparison.  This profile is intended to be used by Simple Authentication and Security Layer (SASL) mechanisms (such as PLAIN and SCRAM-SHA-1), as well as other protocols that exchange simple user names or user secrets.  This document obsoletes RFC 4013.</t>
     </abstract>
 
   </front>
@@ -68,252 +61,108 @@
   <section title="Introduction" anchor="intro">
 
     <section title="Overview" anchor="overview">
-
-      <t>
-      The use of simple user names and passwords in authentication and
-      authorization is pervasive on the Internet.  To increase the
-      likelihood that user name and password input and comparison both work in
-      ways that make sense for typical users throughout the world, this
-      document defines rules for preparing internationalized user names and
-      passwords, primarily for purposes of comparison.
-      </t>
-
-      <t>
-      The algorithms defined in this document assume that all strings 
-      are comprised of characters from the Unicode <xref target="UNICODE"/> 
-      character set.
-      </t>
-
-      <t>
-      The Unicode string preparation algorithms are designed for use in Simple Authentication and Security
-      Layer (<xref target="SASL"/>) mechanisms, such as <xref target="RFC4616">PLAIN</xref> and <xref target="RFC5802">SCRAM-SHA-1</xref>.
-      They may be applicable where simple user names and
-      passwords are used.  This profile is not intended for use in
-      preparing identity strings that are not simple user names (e.g.,
-      email addresses, domain names, distinguished names), nor in cases where
-      identity or password strings are not character data or require
-      different handling (e.g., case folding).</t>
-
-      <t>The PRECIS approach differs fundamentally from the stringprep approach taken in RFC 4013.  The primary difference is that stringprep profiles allow all characters except those which are explicitly disallowed, whereas PRECIS profiles disallow all characters except those which are explicitly allowed (this "inclusion model" was originally used in <xref target='IDNA-PROTO'/>, see <xref target='IDNA-RATIONALE'/> for further discussion).  One result is that rarely-used Unicode characters or blocks (e.g., surrogate code points) do not need to be listed individually, since they are disallowed by default.  It is important to keep this distinction in mind when comparing this document to RFC 4013.</t>
-
+      <t>The use of simple user names and user secrets in authentication and authorization is pervasive on the Internet.  To increase the likelihood that user name and user secret input and comparison both work in ways that make sense for typical users throughout the world, this document defines rules for preparing and comparing internationalized strings that represent simple user names and user secrets.</t>
+      <t>The algorithms defined in this document assume that all strings are comprised of characters from the Unicode character set <xref target="UNICODE"/>.</t>
+      <t>The algorithms are designed for use in Simple Authentication and Security Layer (SASL) <xref target="RFC4422"/> mechanisms, such as PLAIN <xref target="RFC4616"/> and SCRAM-SHA-1 <xref target="RFC5802"/>.  They can be applicable where simple user names and user secrets are used.  This profile is not intended for use in preparing identifier strings that are not simple user names (e.g., email addresses, domain names, distinguished names), nor in cases where identifier strings or secret strings are not character data or require different handling (e.g., case folding).</t>
+      <t>This document builds upon the PRECIS framework defined in <xref target='FRAMEWORK'/>, which differs fundamentally from the stringprep technology <xref target='RFC3454'/> used in SASLprep <xref target='RFC4013'/>.  The primary difference is that stringprep profiles allow all characters except those which are explicitly disallowed, whereas PRECIS profiles disallow all characters except those which are explicitly allowed (this "inclusion model" was originally used for internationalized domain names in <xref target='RFC5891'/>; see <xref target='RFC5894'/> for further discussion).  It is important to keep this distinction in mind when comparing this document to RFC 4013.</t>
       <t>This document obsoletes RFC 4013.</t>
     </section>
 
     <section title="Terminology" anchor="terms">
-      <t>Many important terms used in this document are defined in <xref target='FRAMEWORK'/>, <xref target='I18N-TERMS'/>, <xref target='IDNA-DEFS'/>, and <xref target='UNICODE'/>.</t>
-      <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in RFC 2119 <xref target='KEYWORDS'/>.</t>
+      <t>Many important terms used in this document are defined in <xref target='FRAMEWORK'/>, <xref target='RFC4422'/>, <xref target='RFC5890'/>, <xref target='RFC6365'/>, and <xref target='UNICODE'/>.</t>
+      <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in <xref target='RFC2119'/>.</t>
     </section>
 
   </section>
 
+  <section title='Simple User Names' anchor='username'>
 
-
-
-<!--
-    2.1.  Mapping
-
-    This profile specifies:
-
-    -  non-ASCII space characters [StringPrep, C.1.2] that can be
-    mapped to SPACE (U+0020), and
-
-    -  the "commonly mapped to nothing" characters [StringPrep, B.1]
-    that can be mapped to nothing.
-
-    2.2.  Normalization
-
-NOTENOTENOTE Need to explain the change from NFC to NFKC?
-    This profile specifies using Unicode normalization form KC, as
-    described in Section 4 of [StringPrep].
-
-    2.3.  Prohibited Output
-
-    This profile specifies the following characters as prohibited input:
-
-    - Non-ASCII space characters [StringPrep, C.1.2]
-    - ASCII control characters [StringPrep, C.2.1]
-    - Non-ASCII control characters [StringPrep, C.2.2]
-    - Private Use characters [StringPrep, C.3]
-    - Non-character code points [StringPrep, C.4]
-    - Surrogate code points [StringPrep, C.5]
-    - Inappropriate for plain text characters [StringPrep, C.6]
-    - Inappropriate for canonical representation characters
-    [StringPrep, C.7]
-    - Change display properties or deprecated characters
-    [StringPrep, C.8]
-    - Tagging characters [StringPrep, C.9]
-
-    2.4.  Bidirectional Characters
-
-    This profile specifies checking bidirectional strings as described in
-    [StringPrep, Section 6].
-
-    2.5.  Unassigned Code Points
-
-    This profile specifies the [StringPrep, A.1] table as its list of
-    unassigned code points.
--->
-
-<!--NameClass definition from draft-ietf-precis-framework-01.txt:
-
-    3.1.1.  Valid
-
-    o  Letters and numbers, i.e., the LetterDigits ("A") category first
-    defined in [RFC5892] and listed here under Section 6.1.
-    o  Code points in the range U+0021 through U+007E, i.e., the ASCII7
-    ("K") rule defined under Section 6.11.  These code points are
-    valid even if they would otherwise be disallowed according to the
-    property-based rules specified in the next section.
-
-    3.1.2.  Disallowed
-
-    o  Control characters, i.e., the Controls ("L") category defined
-    under Section 6.12.
-    o  Space characters, i.e., the Spaces ("N") category defined under
-    Section 6.14.
-    o  Symbol characters, i.e., the Symbols ("O") category defined under
-    Section 6.15.
-    o  Punctuation characters, i.e., the Punctuation ("P") category
-    defined under Section 6.16.
-    
-    o  Any character that has a compatibility equivalent, i.e., the
-    HasCompat ("Q") category defined under Section 6.17.  These code
-    points are disallowed even if they would otherwise be valid
-    according to the property-based rules specified in the previous
-    section.
-NOTENOTENOTE This is a change from SASLprep    
-    
--->
-    
-    <section title='User Name Preparation' anchor='username-prep'>
-
-      <t>
-        A user name MUST be processed as follows,
-        where the operations specified MUST be completed in the order shown (note that some steps can be combined
-        and performed at the same time):
-      </t>
+    <section title='Definition' anchor='username-definition'>
+      <t>Some SASL mechanisms (e.g., CRAM-MD5, DIGEST-MD5, and SCRAM) specify that the authentication identity used in the context of such mechanisms is a "simple user name" (see Section 2 of <xref target='RFC4422'/> as well as <xref target='RFC4013'/>).  However, the exact form of a simple user name in any particular mechanism or deployment thereof is a local matter, and a simple user name does not necessarily map to an application identifier such as the localpart of an email address.</t>
+      <t>For purposes of preparation and comparison of authentication identities, this document specifies that a simple user name is a string of <xref target='UNICODE'/> code points, encoded using UTF-8 <xref target='RFC3629'/>, and structured as an ordered sequence of simpleparts (where the complete simple user name can consist of a single simplepart or a space-separated sequence of simpleparts).</t>
+      <t>Therefore the syntax for a simple user name is defined as follows using the Augmented Backus-Naur Form (ABNF) as specified in <xref target="RFC5234"/>.</t>
+      <figure>
+        <artwork><![CDATA[
+   simpleusername = simplepart [1*(SP simplepart)]
+   simplepart     = 1*(simplepoint)
+                    ;
+                    ; a "simplepoint" is a UTF-8 encoded Unicode
+                    ; code point that conforms to the simplepart 
+                    ; subclass of the "NameClass" string class
+                    ; defined in draft-ietf-precis-framework
+                    ;
+        ]]></artwork>
+      </figure>
+    </section>
+    <section title='Preparation' anchor='username-preparation'>
+      <t>A simple user name MUST NOT be zero bytes in length.  This rule is to be enforced after any mapping or normalization of code points.</t>
+      <t>Each simplepart of a simple user name MUST be treated as follows, where the operations specified MUST be completed in the order shown:</t>
       <t>
         <list style='numbers'>
-
-          <t>(MAPPING 1) 
-            Non-ASCII space characters from the "N" category defined under Section 6.14 of <xref target='FRAMEWORK'/>
-            MUST be mapped to SPACE (U+0020).
-            <vspace blankLines='1'/>
-          </t>
-
-          <t>(MAPPING 2) 
-            Characters from the "M" category defined under Section 6.13 MUST be mapped to nothing (this category includes all of the "characters commonly mapped to nothing" from Appendix B.1 of <xref target='STRINGPREP'/>), except U+1806 MONGOLIAN TODO SOFT HYPHEN).
-            <vspace blankLines='1'/>
-          </t>
-
-          <t>(MAPPING 3)
-            Uppercase and titlecase characters MUST be mapped to their lowercase equivalents.
-
-            <vspace blankLines='1'/>
-
-            [[NOTE: This differs from SASLprep, which allowed uppercase and titlecase characters.]]
-
-            <vspace blankLines='1'/>
-          </t>
-          
-          <t>(PRECIS)
-            A user name MUST consist only of Unicode code points that conform to the "NameClass"
-            base string class defined in <xref target='FRAMEWORK'/>.
-
-            <vspace blankLines='1'/>
-
-            [[OPEN ISSUE: SASLprep allowed spaces in user names, should they be allowed here?]]
-
-            <vspace blankLines='1'/>
-          </t>
-          
-          <t>All characters MUST be mapped using Unicode Normalization Form C (NFC).
-
-            <vspace blankLines='1'/>
-
-             [[OPEN ISSUE: This differs from SASLprep, which used NFKC.]]
-
-            <vspace blankLines='1'/>
-          </t>
-
-          <t>
-            After performing all of the above steps a user name MUST NOT be zero bytes in length.
-          </t>
-
+          <t>Map uppercase and titlecase characters to their lowercase equivalents.<vspace blankLines='1'/></t>
+          <t>Optionally apply additional mappings, such as those defined in <xref target='MAPPINGS'/>.<vspace blankLines='1'/></t>
+          <t>Apply Unicode Normalization Form C (NFC) to all characters.</t>
         </list>
       </t>
-      
-      <t>
-        With regard to directionality, the "Bidi Rule" provided in <xref target='IDNA-BIDI'/> applies.
-      </t>
-
-      <t>As noted in the Introduction, all code points and blocks not explicitly allowed in the PRECIS NameClass are disallowed; this includes private use characters, surrogate code points, and the other code points and blocks defined as "Prohibited Output" in Section 2.3 of RFC 4013.</t>
-
-      <t>[[TODO: Double-check that all SASLprep prohibited output is indeed disallowed by the PRECIS NameClass.]]
-      </t>
-
+      <t>With regard to directionality, the "Bidi Rule" provided in <xref target='RFC5893'/> applies.</t>
     </section>
-
-    <section title='Password Preparation' anchor='password-prep'>
-
+    <section title='Migration' anchor='username-migration'>
+      <t>The rules defined in the previous section differ slightly from those defined by the SASLprep specification <xref target='RFC4013'/>.  Therefore, deployments that currently use SASLprep will need to scrub existing data when migrating to use of the PRECIS simplepart subclass.  In particular:</t>
       <t>
-        A password MUST be processed as follows,
-        where the operations specified MUST be completed in the order shown (note that some steps can be combined
-        and performed at the same time):
+        <list style='symbols'>
+          <t>SASLprep mapped non-ASCII spaces to ASCII space (U+0020), whereas the PRECIS simplepart subclass entirely disallows non-ASCII spaces.  For migration purposes, deployments need to convert non-ASCII space characters to ASCII space in simple user names.<vspace blankLines='1'/></t>
+          <t>SASLprep mapped the "characters commonly mapped to nothing" from Appendix B.1 of <xref target='RFC3454'/>) to nothing, whereas the PRECIS simplepart subclass entirely disallows such characters, which correspond to the code points from the "M" category defined under Section 6.13 of <xref target='FRAMEWORK'/> (with the exception of U+1806 MONGOLIAN TODO SOFT HYPHEN, which was commonly mapped to nothing in Unicode 3.2 but at the time of this writing is allowed by Unicode 6.1).  For migration purposes, deployments need to remove code points from the PRECIS "M" category in simple user names.<vspace blankLines='1'/></t>
+          <t>SASLprep allowed uppercase and titlecase characters, whereas the PRECIS simplepart subclass maps uppercase and titlecase characters to their lowercase equivalents.  For migration purposes, deployments can either convert uppercase and titlecase characters to their lowercase equivalents in simple user names (thus losing the case information) or preserve uppercase and titlecase characters and ignore them when comparing simple user names.<vspace blankLines='1'/></t>
+          <t>SASLprep specified the use of Unicode Normalization Form KC (NFKC), whereas the PRECIS simplepart subclass uses Unicode Normalization Form C (NFC).  In practice this change is unlikely to cause significant problems, because NFKC provides methods for mapping Unicode code points with compatibility equivalents to those equivalents, whereas the PRECIS simplepart subclass entirely disallows Unicode code points with compatibility equivalents.  For migration purposes, deployments need to search their simple user names for Unicode code points with compatibility equivalents and map those code points to their compatibility equivalents.</t>
+        </list>
       </t>
+      <t>All code points and blocks not explicitly allowed in the PRECIS NameClass are disallowed; this includes private use characters, surrogate code points, and the other code points and blocks defined as "Prohibited Output" in Section 2.3 of RFC 4013.</t>
+    </section>
+  </section>
+
+  <section title='User Secrets' anchor='secrets'>
+    <section title='Definition' anchor='secrets-definition'>
+      <t>For purposes of preparation and comparison of user secrets (i.e., passwords and passphrases), this document specifies that a user secret is a string of <xref target='UNICODE'/> code points, encoded using UTF-8 <xref target='RFC3629'/>, and structured as an ordered sequence of wordparts (where the complete secret can consist of a single wordpart or a space-separated sequence of wordparts).</t>
+      <t>Therefore the syntax for a user secret is defined as follows using the Augmented Backus-Naur Form (ABNF) as specified in <xref target="RFC5234"/>.</t>
+      <figure>
+        <artwork><![CDATA[
+   usersecret     = wordpart [1*(SP wordpart)]
+   wordpart       = 1*(wordpoint)
+                    ;
+                    ; a "wordpoint" is a UTF-8 encoded Unicode
+                    ; code point that conforms to the wordpart 
+                    ; subclass of the "FreeClass" string class
+                    ; defined in draft-ietf-precis-framework
+                    ;
+        ]]></artwork>
+      </figure>
+    </section>
+    <section title='Preparation' anchor='secrets-preparation'>
+      <t>A user secret MUST NOT be zero bytes in length.  This rule is to be enforced after any mapping or normalization of code points.</t>
+      <t>Each wordpart of a user secret MUST be treated as follows, where the operations specified MUST be completed in the order shown:</t>
       <t>
         <list style='numbers'>
-
-          <t>
-            (MAPPING 1) non-ASCII space characters from the "N" category defined under Section 6.14 of <xref target='FRAMEWORK'/>
-            MUST be mapped to SPACE (U+0020).
-            <vspace blankLines='1'/>
-          </t>
-
-          <t>
-            (MAPPING 2) Characters from the "M" category defined under Section 6.13 MUST be mapped to nothing (this category includes all of the "characters commonly mapped to nothing" from Appendix B.1 of <xref target='STRINGPREP'/>), except U+1806 MONGOLIAN TODO SOFT HYPHEN).
-            <vspace blankLines='1'/>
-          </t>
-
-          <t>
-            [[OPEN ISSUE: Map HasCompat ("Q") category?]]
-            <vspace blankLines='1'/>
-          </t>
-
-          <t>
-            (PRECIS)
-            A password MUST consist only of Unicode code points that conform to the "FreeClass"
-            base string class defined in <xref target='FRAMEWORK'/>.
-            <vspace blankLines='1'/>
-          </t>
-
-          <t>
-            All characters MUST be mapped using Unicode Normalization Form C (NFC).
-            <vspace blankLines='1'/>
-            [[OPEN ISSUE: Use NFKC as in the original SASLprep?]]
-            <vspace blankLines='1'/>
-          </t>
-
-          <t>
-            After performing all of the above steps, a password MUST NOT be zero bytes in length.
-          </t>
-
+          <t>Map non-ASCII spaces to ASCII space (U+0020).</t>
+          <t>Map the code points from the "M" category defined under Section 6.13 of <xref target='FRAMEWORK'/> to nothing.</t>
+          <t>Apply Unicode Normalization Form C (NFC) to all characters.</t>
         </list>
       </t>
-
+      <t>With regard to directionality, the "Bidi Rule" provided in <xref target='RFC5893'/> applies.</t>
+    </section>
+    <section title='Migration' anchor='secret-migration'>
+      <t>The rules defined in the previous section differ slightly from those defined by the SASLprep specification <xref target='RFC4013'/>.  In particular:</t>
       <t>
-        With regard to directionality, the "Bidi Rule" provided in <xref target='IDNA-BIDI'/> applies.
+        <list style='symbols'>
+          <t>SASLprep specified the use of Unicode Normalization Form KC (NFKC), whereas the PRECIS wordpart subclass uses Unicode Normalization Form C (NFC).  Because NFKC is more aggressive about finding matches than NFC, in practice this change is unlikely to cause significant problems and indeed will probably result in fewer false positives when comparing user secrets.</t>
+        </list>
       </t>
-
-      <t>As noted in the Introduction, all code points and blocks not explicitly allowed in the PRECIS FreeClass are disallowed; this includes private use characters, surrogate code points, and the other code points and blocks defined as "Prohibited Output" in Section 2.3 of RFC 4013.</t>
-
-      <t>[[TODO: Double-check that all SASLprep prohibited output is indeed disallowed by the PRECIS FreeClass.]]</t>
-
+      <t>All code points and blocks not explicitly allowed in the PRECIS FreeClass are disallowed; this includes private use characters, surrogate code points, and the other code points and blocks defined as "Prohibited Output" in Section 2.3 of RFC 4013.</t>
     </section>
+  </section>
 
-    <section title="ToDo">
-      <t>Compare output of the new algorithms on Unicode 3.2 data with SASLprep and make sure that the PRECIS and KITTEN WGs are comfortable with the changes in which Unicode characters are allowed/disallowed (if any).</t>
-    </section>
+  <section title="Open Issues">
+    <t>We need to compare the output obtained when applying the new algorithms to Unicode 3.2 and Unicode 6.1 data to the output obtained when applying SASLprep to Unicode 3.2 data, then make sure that the PRECIS and KITTEN WGs are comfortable with the changes in which Unicode characters are allowed/disallowed (if any).</t>
+  </section>
     
   <section title="Security Considerations" anchor="security">
     <section title="Password Strength" anchor="security-passwords">
@@ -334,7 +183,7 @@ NOTENOTENOTE This is a change from SASLprep
         <list style='hanging'>
           <t hangText='Application Protocol:'>SASL/Kerberos.</t>
           <t hangText='Base Class:'>NameClass.</t>
-          <t hangText='Subclassing:'>Yes. See <xref target='username-prep'/> of RFC &rfc.number;.</t>
+          <t hangText='Subclassing:'>Yes: "simplepart". See <xref target='username-preparation'/> of RFC &rfc.number;.</t>
           <t hangText='Directionality:'>The "Bidi Rule" defined in RFC 5893 applies.</t>
           <t hangText='Casemapping:'>Uppercase and titlecase code points are mapped to their lowercase equivalents.</t>
           <t hangText='Normalization:'>NFC.</t>
@@ -381,8 +230,7 @@ NOTENOTENOTE This is a change from SASLprep
         target='http://www.ietf.org/internet-drafts/draft-ietf-precis-framework-01.txt' />
 </reference>
 
-
-<reference anchor="KEYWORDS">
+<reference anchor="RFC2119">
 <front>
 <title abbrev='RFC Key Words'>Key words for use in RFCs to Indicate Requirement Levels</title>
 <author initials='S.' surname='Bradner' fullname='Scott Bradner'>
@@ -404,7 +252,6 @@ NOTENOTENOTE This is a change from SASLprep
    capitalized.  This document defines these words as they should be
    interpreted in IETF documents.  Authors who follow these guidelines
    should incorporate this phrase near the beginning of their document:
-
 <list>
 <t>
       The key words &quot;MUST&quot;, &quot;MUST NOT&quot;, &quot;REQUIRED&quot;, &quot;SHALL&quot;, &quot;SHALL
@@ -421,6 +268,35 @@ NOTENOTENOTE This is a change from SASLprep
 <format type='TXT' octets='4723' target='ftp://ftp.isi.edu/in-notes/rfc2119.txt' />
 <format type='HTML' octets='14486' target='http://xml.resource.org/public/rfc/html/rfc2119.html' />
 <format type='XML' octets='5661' target='http://xml.resource.org/public/rfc/xml/rfc2119.xml' />
+</reference>
+
+<reference anchor='RFC3629'>
+
+<front>
+<title>UTF-8, a transformation format of ISO 10646</title>
+<author initials='F.' surname='Yergeau' fullname='F. Yergeau'>
+<organization /></author>
+<date year='2003' month='November' />
+<abstract>
+<t>ISO/IEC 10646-1 defines a large character set called the Universal Character Set (UCS) which encompasses most of the world's writing systems.  The originally proposed encodings of the UCS, however, were not compatible with many current applications and protocols, and this has led to the development of UTF-8, the object of this memo.  UTF-8 has the characteristic of preserving the full US-ASCII range, providing compatibility with file systems, parsers and other software that rely on US-ASCII values but are transparent to other values.  This memo obsoletes and replaces RFC 2279.</t></abstract></front>
+<seriesInfo name='STD' value='63' />
+<seriesInfo name='RFC' value='3629' />
+<format type='TXT' octets='33856' target='http://www.rfc-editor.org/rfc/rfc3629.txt' />
+</reference>
+
+<reference anchor='RFC5234'>
+<front>
+<title>Augmented BNF for Syntax Specifications: ABNF</title>
+<author initials='D.' surname='Crocker' fullname='D. Crocker'>
+<organization /></author>
+<author initials='P.' surname='Overell' fullname='P. Overell'>
+<organization /></author>
+<date year='2008' month='January' />
+<abstract>
+<t>Internet technical specifications often need to define a formal syntax.  Over the years, a modified version of Backus-Naur Form (BNF), called Augmented BNF (ABNF), has been popular among many Internet specifications.  The current specification documents ABNF.  It balances compactness and simplicity with reasonable representational power.  The differences between standard BNF and ABNF involve naming rules, repetition, alternatives, order-independence, and value ranges.  This specification also supplies additional rule definitions and encoding for a core lexical analyzer of the type common to several Internet specifications. [STANDARDS-TRACK]</t></abstract></front>
+<seriesInfo name='STD' value='68' />
+<seriesInfo name='RFC' value='5234' />
+<format type='TXT' octets='26359' target='http://www.rfc-editor.org/rfc/rfc5234.txt' />
 </reference>
 
 <reference anchor="UNICODE">
@@ -443,6 +319,61 @@ Unicode 3.2 (http://www.unicode.org/reports/tr28/).
     </references>
 
     <references title="Informative References">
+
+<reference anchor='MAPPINGS'>
+<front>
+<title>Mapping characters for PRECIS classes</title>
+<author initials='Y' surname='Yoneya' fullname='Yoshiro Yoneya'>
+    <organization />
+</author>
+<author initials='T' surname='NEMOTO' fullname='Takahiro NEMOTO'>
+    <organization />
+</author>
+<date month='February' day='10' year='2012' />
+<abstract><t>Preparation and comparison of internationalized strings ("PRECIS") Framework [I-D.ietf-precis-framework] is defining several classes of strings for preparation and comparison.  In the document, case mapping is defined because many of protocols handle case sensitive or case insensitive string comparison and therefore preparation of string is mandatory.  As described in IDNA mapping [RFC5895] and PRECIS problem statement [I-D.ietf-precis-problem-statement], mappings in internationalized strings are not limited to case, but also width, delimiters and/or other specials are taken into consideration.  This document considers mappings other than case mapping in PRECIS context.</t></abstract>
+</front>
+<seriesInfo name='Internet-Draft' value='draft-yoneya-precis-mappings-01' />
+<format type='TXT'
+        target='http://www.ietf.org/internet-drafts/draft-yoneya-precis-mappings-01.txt' />
+</reference>
+
+<reference anchor="RFC3454">
+<front>
+<title>Preparation of Internationalized Strings ("stringprep")</title>
+<author initials='P.' surname='Hoffman' fullname='P.  Hoffman'>
+<organization /></author>
+<author initials='M.' surname='Blanchet' fullname='M.  Blanchet'>
+<organization /></author>
+<date month='December' year='2002' /></front>
+<seriesInfo name='RFC' value='3454' />
+<format type='TXT' octets='138684' target='ftp://ftp.isi.edu/in-notes/rfc3454.txt' />
+</reference>
+
+<reference anchor='RFC4013'>
+<front>
+<title>SASLprep: Stringprep Profile for User Names and Passwords</title>
+<author initials='K.' surname='Zeilenga' fullname='K. Zeilenga'>
+<organization /></author>
+<date year='2005' month='February' />
+<abstract>
+<t>This document describes how to prepare Unicode strings representing user names and passwords for comparison.  The document defines the "SASLprep" profile of the "stringprep" algorithm to be used for both user names and passwords.  This profile is intended to be used by Simple Authentication and Security Layer (SASL) mechanisms (such as PLAIN, CRAM-MD5, and DIGEST-MD5), as well as other protocols exchanging simple user names and/or passwords. [STANDARDS-TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='4013' />
+<format type='TXT' octets='13051' target='http://www.rfc-editor.org/rfc/rfc4013.txt' />
+</reference>
+
+<reference anchor="RFC4422">
+<front>
+<title>Simple Authentication and Security Layer (SASL)</title>
+<author initials='A.' surname='Melnikov' fullname='A. Melnikov' role="editor">
+<organization /></author>
+<author initials='K.' surname='Zeilenga' fullname='K. Zeilenga' role="editor">
+<organization /></author>
+<date year='2006' month='June' />
+<abstract>
+<t>&lt;p>The Simple Authentication and Security Layer (SASL) is a framework for providing authentication and data security services in connection-oriented protocols via replaceable mechanisms. It provides a structured interface between protocols and mechanisms. The resulting framework allows new protocols to reuse existing mechanisms and allows old protocols to make use of new mechanisms. The framework also provides a protocol for securing subsequent protocol exchanges within a data security layer.&lt;/p>&lt;p> This document describes how a SASL mechanism is structured, describes how protocols include support for SASL, and defines the protocol for carrying a data security layer over a connection. In addition, this document defines one SASL mechanism, the EXTERNAL mechanism.&lt;/p>&lt;p> This document obsoletes RFC 2222. [STANDARDS TRACK]&lt;/p></t></abstract></front>
+<seriesInfo name='RFC' value='4422' />
+<format type='TXT' octets='73206' target='ftp://ftp.isi.edu/in-notes/rfc4422.txt' />
+</reference>
 
 <reference anchor='RFC4616'>
 <front>
@@ -470,13 +401,41 @@ Unicode 3.2 (http://www.unicode.org/reports/tr28/).
 <date year='2010' month='July' />
 <abstract>
 <t>The secure authentication mechanism most widely deployed and used by Internet application protocols is the transmission of clear-text passwords over a channel protected by Transport Layer Security (TLS). There are some significant security concerns with that mechanism, which could be addressed by the use of a challenge response authentication mechanism protected by TLS. Unfortunately, the challenge response mechanisms presently on the standards track all fail to meet requirements necessary for widespread deployment, and have had success only in limited use.&lt;/t>&lt;t> This specification describes a family of Simple Authentication and Security Layer (SASL; RFC 4422) authentication mechanisms called the Salted Challenge Response Authentication Mechanism (SCRAM), which addresses the security concerns and meets the deployability requirements. When used in combination with TLS or an equivalent security layer, a mechanism from this family could improve the status quo for application protocol authentication and provide a suitable choice for a mandatory-to-implement mechanism for future application protocol standards. [STANDARDS-TRACK]</t></abstract></front>
-
 <seriesInfo name='RFC' value='5802' />
 <format type='TXT' octets='59049' target='http://www.rfc-editor.org/rfc/rfc5802.txt' />
 </reference>
 
-      
-      <reference anchor='IDNA-BIDI'>
+      <reference anchor='RFC5890'>
+        <front>
+          <title>Internationalized Domain Names for Applications (IDNA): Definitions and Document Framework</title>
+          <author initials='J.' surname='Klensin' fullname='J. Klensin'>
+            <organization />
+          </author>
+          <date year='2010' month='August' />
+          <abstract>
+            <t>This document is one of a collection that, together, describe the protocol and usage context for a revision of Internationalized Domain Names for Applications (IDNA), superseding the earlier version.  It describes the document collection and provides definitions and other material that are common to the set. [STANDARDS TRACK]</t>
+          </abstract>
+        </front>
+        <seriesInfo name='RFC' value='5890' />
+        <format type='TXT' octets='54245' target='http://www.rfc-editor.org/rfc/rfc5890.txt' />
+      </reference>
+
+      <reference anchor='RFC5891'>
+        <front>
+          <title>Internationalized Domain Names in Applications (IDNA): Protocol</title>
+          <author initials='J.' surname='Klensin' fullname='J. Klensin'>
+            <organization />
+          </author>
+          <date year='2010' month='August' />
+          <abstract>
+            <t>This document is the revised protocol definition for Internationalized Domain Names (IDNs).  The rationale for changes, the relationship to the older specification, and important terminology are provided in other documents.  This document specifies the protocol mechanism, called Internationalized Domain Names in Applications (IDNA), for registering and looking up IDNs in a way that does not require changes to the DNS itself.  IDNA is only meant for processing domain names, not free text. [STANDARDS TRACK]</t>
+          </abstract>
+        </front>
+        <seriesInfo name='RFC' value='5891' />
+        <format type='TXT' octets='38105' target='http://www.rfc-editor.org/rfc/rfc5891.txt' />
+      </reference>
+
+      <reference anchor='RFC5893'>
         <front>
           <title>Right-to-Left Scripts for Internationalized Domain Names for Applications (IDNA)</title>
           <author initials='H.' surname='Alvestrand' fullname='H. Alvestrand'>
@@ -494,54 +453,7 @@ Unicode 3.2 (http://www.unicode.org/reports/tr28/).
         <format type='TXT' octets='38870' target='http://www.rfc-editor.org/rfc/rfc5893.txt' />
       </reference>
 
-      <reference anchor='IDNA-DEFS'>
-        <front>
-          <title>Internationalized Domain Names for Applications (IDNA): Definitions and Document Framework</title>
-          <author initials='J.' surname='Klensin' fullname='J. Klensin'>
-            <organization />
-          </author>
-          <date year='2010' month='August' />
-          <abstract>
-            <t>This document is one of a collection that, together, describe the protocol and usage context for a revision of Internationalized Domain Names for Applications (IDNA), superseding the earlier version.  It describes the document collection and provides definitions and other material that are common to the set. [STANDARDS TRACK]</t>
-          </abstract>
-        </front>
-        <seriesInfo name='RFC' value='5890' />
-        <format type='TXT' octets='54245' target='http://www.rfc-editor.org/rfc/rfc5890.txt' />
-      </reference>
-
-      <reference anchor='IDNA-PROTO'>
-        <front>
-          <title>Internationalized Domain Names in Applications (IDNA): Protocol</title>
-          <author initials='J.' surname='Klensin' fullname='J. Klensin'>
-            <organization />
-          </author>
-          <date year='2010' month='August' />
-          <abstract>
-            <t>This document is the revised protocol definition for Internationalized Domain Names (IDNs).  The rationale for changes, the relationship to the older specification, and important terminology are provided in other documents.  This document specifies the protocol mechanism, called Internationalized Domain Names in Applications (IDNA), for registering and looking up IDNs in a way that does not require changes to the DNS itself.  IDNA is only meant for processing domain names, not free text. [STANDARDS TRACK]</t>
-          </abstract>
-        </front>
-        <seriesInfo name='RFC' value='5891' />
-        <format type='TXT' octets='38105' target='http://www.rfc-editor.org/rfc/rfc5891.txt' />
-      </reference>
-
-<reference anchor='I18N-TERMS'>
-<front>
-<title>Terminology Used in Internationalization in the IETF</title>
-<author initials='P' surname='Hoffman' fullname='Paul Hoffman'>
-    <organization />
-</author>
-<author initials='J' surname='Klensin' fullname='John Klensin'>
-    <organization />
-</author>
-<date month='April' day='21' year='2011' />
-<abstract><t>This document provides a glossary of terms used in the IETF when discussing internationalization.  The purpose is to help frame discussions of internationalization in the various areas of the IETF and to help introduce the main concepts to IETF participants.</t></abstract>
-</front>
-<seriesInfo name='Internet-Draft' value='draft-hoffman-rfc3536bis-02' />
-<format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-hoffman-rfc3536bis-02.txt' />
-</reference>
-
-<reference anchor='IDNA-RATIONALE'>
+<reference anchor='RFC5894'>
 <front>
 <title>Internationalized Domain Names for Applications (IDNA): Background, Explanation, and Rationale</title>
 <author initials='J.' surname='Klensin' fullname='J. Klensin'>
@@ -553,30 +465,19 @@ Unicode 3.2 (http://www.unicode.org/reports/tr28/).
 <format type='TXT' octets='115174' target='http://www.rfc-editor.org/rfc/rfc5894.txt' />
 </reference>
 
-<reference anchor="SASL">
+<reference anchor='RFC6365'>
 <front>
-<title>Simple Authentication and Security Layer (SASL)</title>
-<author initials='A.' surname='Melnikov' fullname='A. Melnikov' role="editor">
+<title>Terminology Used in Internationalization in the IETF</title>
+<author initials='P.' surname='Hoffman' fullname='P. Hoffman'>
 <organization /></author>
-<author initials='K.' surname='Zeilenga' fullname='K. Zeilenga' role="editor">
+<author initials='J.' surname='Klensin' fullname='J. Klensin'>
 <organization /></author>
-<date year='2006' month='June' />
+<date year='2011' month='September' />
 <abstract>
-<t>&lt;p>The Simple Authentication and Security Layer (SASL) is a framework for providing authentication and data security services in connection-oriented protocols via replaceable mechanisms. It provides a structured interface between protocols and mechanisms. The resulting framework allows new protocols to reuse existing mechanisms and allows old protocols to make use of new mechanisms. The framework also provides a protocol for securing subsequent protocol exchanges within a data security layer.&lt;/p>&lt;p> This document describes how a SASL mechanism is structured, describes how protocols include support for SASL, and defines the protocol for carrying a data security layer over a connection. In addition, this document defines one SASL mechanism, the EXTERNAL mechanism.&lt;/p>&lt;p> This document obsoletes RFC 2222. [STANDARDS TRACK]&lt;/p></t></abstract></front>
-<seriesInfo name='RFC' value='4422' />
-<format type='TXT' octets='73206' target='ftp://ftp.isi.edu/in-notes/rfc4422.txt' />
-</reference>
-
-<reference anchor="STRINGPREP">
-<front>
-<title>Preparation of Internationalized Strings ("stringprep")</title>
-<author initials='P.' surname='Hoffman' fullname='P.  Hoffman'>
-<organization /></author>
-<author initials='M.' surname='Blanchet' fullname='M.  Blanchet'>
-<organization /></author>
-<date month='December' year='2002' /></front>
-<seriesInfo name='RFC' value='3454' />
-<format type='TXT' octets='138684' target='ftp://ftp.isi.edu/in-notes/rfc3454.txt' />
+<t>This document provides a list of terms used in the IETF when discussing internationalization.  The purpose is to help frame discussions of internationalization in the various areas of the IETF and to help introduce the main concepts to IETF participants.  This memo documents an Internet Best Current Practice.</t></abstract></front>
+<seriesInfo name='BCP' value='166' />
+<seriesInfo name='RFC' value='6365' />
+<format type='TXT' octets='103155' target='http://www.rfc-editor.org/rfc/rfc6365.txt' />
 </reference>
 
 <reference anchor="UTR39" target='http://unicode.org/reports/tr39/'>
@@ -589,26 +490,22 @@ Unicode 3.2 (http://www.unicode.org/reports/tr28/).
   </front>
 </reference>
 
-
     </references>
 
     <section title="Differences from RFC 4013" anchor="diffs">
-      <t>Based on consensus derived from implementation and deployment experience as well as formal interoperability testing, the following substantive modifications were made from RFC 3920.</t>
+      <t>The following substantive modifications were made from RFC 3920.</t>
       <t>
         <list style='symbols'>
-
-          <t>A single SASLprep algorithm was replaced by two separate algorithms:
-             one for user names and another for passwords.</t>
-          
-          <t>The new preparation algorithms use PRECIS instead of a Stringprep profile.
-          The algorithms are now Unicode version independent.</t>
+          <t>A single SASLprep algorithm was replaced by two separate algorithms: one for user names and another for passwords.</t>
+          <t>The new preparation algorithms use PRECIS instead of a stringprep profile.  The new algorithms work independenctly of Unicode versions.</t>
+          <t>As recommended in the PRECIS framwork, changed the Unicode normalization form from NFKC to NFC.</t>
         </list>
       </t>
     </section>
 
     <section title="Acknowledgements" anchor="acks">
       
-      <t>This document is partially based on text from RFC 4013.</t>
+      <t>This document borrows some text from RFC 4013 and RFC 6120.</t>
       
     </section>
 
