@@ -41,7 +41,7 @@
       </address>
     </author>
 
-    <date year="2012"/>
+    <date day="2" month="August" year="2012"/>
 
     <area>Applications</area>
     <workgroup>Precis</workgroup>
@@ -61,10 +61,10 @@
   <section title="Introduction" anchor="intro">
 
     <section title="Overview" anchor="overview">
-      <t>The use of simple user names and user secrets in authentication and authorization is pervasive on the Internet.  To increase the likelihood that user name and user secret input and comparison both work in ways that make sense for typical users throughout the world, this document defines rules for preparing and comparing internationalized strings that represent simple user names and user secrets.</t>
+      <t>The use of simple user names and user secrets in authentication and authorization is pervasive on the Internet.  To increase the likelihood that the input and comparison of user names and user secrets will work in ways that make sense for typical users throughout the world, this document defines rules for preparing and comparing internationalized strings that represent simple user names and user secrets.</t>
       <t>The algorithms defined in this document assume that all strings are comprised of characters from the Unicode character set <xref target="UNICODE"/>.</t>
       <t>The algorithms are designed for use in Simple Authentication and Security Layer (SASL) <xref target="RFC4422"/> mechanisms, such as PLAIN <xref target="RFC4616"/> and SCRAM-SHA-1 <xref target="RFC5802"/>.  They can be applicable where simple user names and user secrets are used.  This profile is not intended for use in preparing identifier strings that are not simple user names (e.g., email addresses, domain names, distinguished names), nor in cases where identifier strings or secret strings are not character data or require different handling (e.g., case folding).</t>
-      <t>This document builds upon the PRECIS framework defined in <xref target='FRAMEWORK'/>, which differs fundamentally from the stringprep technology <xref target='RFC3454'/> used in SASLprep <xref target='RFC4013'/>.  The primary difference is that stringprep profiles allow all characters except those which are explicitly disallowed, whereas PRECIS profiles disallow all characters except those which are explicitly allowed (this "inclusion model" was originally used for internationalized domain names in <xref target='RFC5891'/>; see <xref target='RFC5894'/> for further discussion).  It is important to keep this distinction in mind when comparing this document to RFC 4013.</t>
+      <t>This document builds upon the PRECIS framework defined in <xref target='FRAMEWORK'/>, which differs fundamentally from the stringprep technology <xref target='RFC3454'/> used in SASLprep <xref target='RFC4013'/>.  The primary difference is that stringprep profiles allowed all characters except those which were explicitly disallowed, whereas PRECIS profiles disallow all characters except those which are explicitly allowed (this "inclusion model" was originally used for internationalized domain names in <xref target='RFC5891'/>; see <xref target='RFC5894'/> for further discussion).  It is important to keep this distinction in mind when comparing the technology defined in this document to the stringprep-based technology for usernames and passwords, known as SASLprep <xref target='RFC4013'/>.</t>
       <t>This document obsoletes RFC 4013.</t>
     </section>
 
@@ -79,17 +79,17 @@
 
     <section title='Definition' anchor='username-definition'>
       <t>Some SASL mechanisms (e.g., CRAM-MD5, DIGEST-MD5, and SCRAM) specify that the authentication identity used in the context of such mechanisms is a "simple user name" (see Section 2 of <xref target='RFC4422'/> as well as <xref target='RFC4013'/>).  However, the exact form of a simple user name in any particular mechanism or deployment thereof is a local matter, and a simple user name does not necessarily map to an application identifier such as the localpart of an email address.</t>
-      <t>For purposes of preparation and comparison of authentication identities, this document specifies that a simple user name is a string of <xref target='UNICODE'/> code points, encoded using UTF-8 <xref target='RFC3629'/>, and structured as an ordered sequence of simpleparts (where the complete simple user name can consist of a single simplepart or a space-separated sequence of simpleparts).</t>
+      <t>For purposes of preparation and comparison of authentication identities, this document specifies that a simple user name is a string of <xref target='UNICODE'/> code points, encoded using UTF-8 <xref target='RFC3629'/>, and structured as an ordered sequence of "simpleparts" (where the complete simple user name can consist of a single simplepart or a space-separated sequence of simpleparts).</t>
       <t>Therefore the syntax for a simple user name is defined as follows using the Augmented Backus-Naur Form (ABNF) as specified in <xref target="RFC5234"/>.</t>
       <figure>
         <artwork><![CDATA[
    simpleusername = simplepart [1*(SP simplepart)]
-   simplepart     = 1*(simplepoint)
+   simplepart     = 1*(namepoint)
                     ;
-                    ; a "simplepoint" is a UTF-8 encoded Unicode
-                    ; code point that conforms to the simplepart 
-                    ; subclass of the "NameClass" string class
-                    ; defined in draft-ietf-precis-framework
+                    ; a "namepoint" is a UTF-8 encoded 
+                    ; Unicode code point that conforms to
+                    ; the "NameClass" string class defined
+                    ; in draft-ietf-precis-framework
                     ;
         ]]></artwork>
       </figure>
@@ -99,9 +99,10 @@
       <t>Each simplepart of a simple user name MUST be treated as follows, where the operations specified MUST be completed in the order shown:</t>
       <t>
         <list style='numbers'>
+          <t>Apply Unicode Normalization Form C (NFC) to all characters.<vspace blankLines='1'/></t>
           <t>Map uppercase and titlecase characters to their lowercase equivalents.<vspace blankLines='1'/></t>
           <t>Optionally apply additional mappings, such as those defined in <xref target='MAPPINGS'/>.<vspace blankLines='1'/></t>
-          <t>Apply Unicode Normalization Form C (NFC) to all characters.</t>
+          <t>Ensure that the resulting string conforms to the definition of the PRECIS NameClass.</t>
         </list>
       </t>
       <t>With regard to directionality, the "Bidi Rule" provided in <xref target='RFC5893'/> applies.</t>
@@ -110,10 +111,10 @@
       <t>The rules defined in the previous section differ slightly from those defined by the SASLprep specification <xref target='RFC4013'/>.  Therefore, deployments that currently use SASLprep will need to scrub existing data when migrating to use of the PRECIS simplepart subclass.  In particular:</t>
       <t>
         <list style='symbols'>
-          <t>SASLprep mapped non-ASCII spaces to ASCII space (U+0020), whereas the PRECIS simplepart subclass entirely disallows non-ASCII spaces.  For migration purposes, deployments need to convert non-ASCII space characters to ASCII space in simple user names.<vspace blankLines='1'/></t>
-          <t>SASLprep mapped the "characters commonly mapped to nothing" from Appendix B.1 of <xref target='RFC3454'/>) to nothing, whereas the PRECIS simplepart subclass entirely disallows such characters, which correspond to the code points from the "M" category defined under Section 6.13 of <xref target='FRAMEWORK'/> (with the exception of U+1806 MONGOLIAN TODO SOFT HYPHEN, which was commonly mapped to nothing in Unicode 3.2 but at the time of this writing is allowed by Unicode 6.1).  For migration purposes, deployments need to remove code points from the PRECIS "M" category in simple user names.<vspace blankLines='1'/></t>
-          <t>SASLprep allowed uppercase and titlecase characters, whereas the PRECIS simplepart subclass maps uppercase and titlecase characters to their lowercase equivalents.  For migration purposes, deployments can either convert uppercase and titlecase characters to their lowercase equivalents in simple user names (thus losing the case information) or preserve uppercase and titlecase characters and ignore them when comparing simple user names.<vspace blankLines='1'/></t>
-          <t>SASLprep specified the use of Unicode Normalization Form KC (NFKC), whereas the PRECIS simplepart subclass uses Unicode Normalization Form C (NFC).  In practice this change is unlikely to cause significant problems, because NFKC provides methods for mapping Unicode code points with compatibility equivalents to those equivalents, whereas the PRECIS simplepart subclass entirely disallows Unicode code points with compatibility equivalents.  For migration purposes, deployments need to search their simple user names for Unicode code points with compatibility equivalents and map those code points to their compatibility equivalents.</t>
+          <t>SASLprep specified the use of Unicode Normalization Form KC (NFKC), whereas this usage of the PRECIS NameClass employs Unicode Normalization Form C (NFC).  In practice this change is unlikely to cause significant problems, because NFKC provides methods for mapping Unicode code points with compatibility equivalents to those equivalents, whereas the PRECIS NameClass entirely disallows Unicode code points with compatibility equivalents.  For migration purposes, deployments need to search their simple user names for Unicode code points with compatibility equivalents and map those code points to their compatibility equivalents.</t>
+          <t>SASLprep mapped non-ASCII spaces to ASCII space (U+0020), whereas the PRECIS NameClass entirely disallows non-ASCII spaces.  For migration purposes, deployments need to convert non-ASCII space characters to ASCII space in simple user names.<vspace blankLines='1'/></t>
+          <t>SASLprep mapped the "characters commonly mapped to nothing" from Appendix B.1 of <xref target='RFC3454'/>) to nothing, whereas the PRECIS NameClass entirely disallows such characters, which correspond to the code points from the "M" category defined under Section 6.13 of <xref target='FRAMEWORK'/> (with the exception of U+1806 MONGOLIAN TODO SOFT HYPHEN, which was commonly mapped to nothing in Unicode 3.2 but at the time of this writing is allowed by Unicode 6.1).  For migration purposes, deployments need to remove code points from the PRECIS "M" category in simple user names.<vspace blankLines='1'/></t>
+          <t>SASLprep allowed uppercase and titlecase characters, whereas this usage of the PRECIS NameClass maps uppercase and titlecase code points to their lowercase equivalents.  For migration purposes, deployments can either convert uppercase and titlecase characters to their lowercase equivalents in simple user names (thus losing the case information) or preserve uppercase and titlecase characters and ignore them when comparing simple user names.<vspace blankLines='1'/></t>
         </list>
       </t>
       <t>All code points and blocks not explicitly allowed in the PRECIS NameClass are disallowed; this includes private use characters, surrogate code points, and the other code points and blocks defined as "Prohibited Output" in Section 2.3 of RFC 4013.</t>
@@ -126,13 +127,12 @@
       <t>Therefore the syntax for a user secret is defined as follows using the Augmented Backus-Naur Form (ABNF) as specified in <xref target="RFC5234"/>.</t>
       <figure>
         <artwork><![CDATA[
-   usersecret     = wordpart [1*(SP wordpart)]
-   wordpart       = 1*(wordpoint)
+   usersecret     = 1*(freepoint)
                     ;
-                    ; a "wordpoint" is a UTF-8 encoded Unicode
-                    ; code point that conforms to the wordpart 
-                    ; subclass of the "FreeClass" string class
-                    ; defined in draft-ietf-precis-framework
+                    ; a "freepoint" is a UTF-8 encoded
+                    ; Unicode code point that conforms to
+                    ; the "FreeClass" string class defined
+                    ; in draft-ietf-precis-framework
                     ;
         ]]></artwork>
       </figure>
@@ -142,9 +142,9 @@
       <t>Each wordpart of a user secret MUST be treated as follows, where the operations specified MUST be completed in the order shown:</t>
       <t>
         <list style='numbers'>
+          <t>Apply Unicode Normalization Form C (NFC) to all characters.<vspace blankLines='1'/></t>
           <t>Map non-ASCII spaces to ASCII space (U+0020).</t>
-          <t>Map the code points from the "M" category defined under Section 6.13 of <xref target='FRAMEWORK'/> to nothing.</t>
-          <t>Apply Unicode Normalization Form C (NFC) to all characters.</t>
+          <t>Ensure that the resulting string conforms to the definition of the PRECIS FreeClass.</t>
         </list>
       </t>
       <t>With regard to directionality, the "Bidi Rule" provided in <xref target='RFC5893'/> applies.</t>
@@ -153,7 +153,8 @@
       <t>The rules defined in the previous section differ slightly from those defined by the SASLprep specification <xref target='RFC4013'/>.  In particular:</t>
       <t>
         <list style='symbols'>
-          <t>SASLprep specified the use of Unicode Normalization Form KC (NFKC), whereas the PRECIS wordpart subclass uses Unicode Normalization Form C (NFC).  Because NFKC is more aggressive about finding matches than NFC, in practice this change is unlikely to cause significant problems and indeed will probably result in fewer false positives when comparing user secrets.</t>
+          <t>SASLprep specified the use of Unicode Normalization Form KC (NFKC), whereas this usage of the PRECIS FreeClass employs Unicode Normalization Form C (NFC).  Because NFKC is more aggressive about finding matches than NFC, in practice this change is unlikely to cause significant problems and indeed will probably result in fewer false positives when comparing user secrets.</t>
+          <t>SASLprep mapped the "characters commonly mapped to nothing" from Appendix B.1 of <xref target='RFC3454'/>) to nothing, whereas the PRECIS FreeClass entirely disallows such characters, which correspond to the code points from the "M" category defined under Section 6.13 of <xref target='FRAMEWORK'/> (with the exception of U+1806 MONGOLIAN TODO SOFT HYPHEN, which was commonly mapped to nothing in Unicode 3.2 but at the time of this writing is allowed by Unicode 6.1).  For migration purposes, deployments need to remove code points from the PRECIS "M" category in user secrets.<vspace blankLines='1'/></t>
         </list>
       </t>
       <t>All code points and blocks not explicitly allowed in the PRECIS FreeClass are disallowed; this includes private use characters, surrogate code points, and the other code points and blocks defined as "Prohibited Output" in Section 2.3 of RFC 4013.</t>
@@ -161,7 +162,7 @@
   </section>
 
   <section title="Open Issues">
-    <t>We need to compare the output obtained when applying the new algorithms to Unicode 3.2 and Unicode 6.1 data to the output obtained when applying SASLprep to Unicode 3.2 data, then make sure that the PRECIS and KITTEN WGs are comfortable with the changes in which Unicode characters are allowed/disallowed (if any).</t>
+    <t>We need to compare the output obtained when applying the new algorithms to Unicode 3.2 and Unicode 6.1 data to the output obtained when applying SASLprep to Unicode 3.2 data, then make sure that the PRECIS and KITTEN WGs are comfortable with any changes to the Unicode characters that are allowed/disallowed.  See also the migration issues described in the foregoing sections.</t>
   </section>
     
   <section title="Security Considerations" anchor="security">
@@ -183,9 +184,9 @@
         <list style='hanging'>
           <t hangText='Application Protocol:'>SASL/Kerberos.</t>
           <t hangText='Base Class:'>NameClass.</t>
-          <t hangText='Subclassing:'>Yes: "simplepart". See <xref target='username-preparation'/> of RFC &rfc.number;.</t>
+          <t hangText='Subclassing:'>No.</t>
           <t hangText='Directionality:'>The "Bidi Rule" defined in RFC 5893 applies.</t>
-          <t hangText='Casemapping:'>Uppercase and titlecase code points are mapped to their lowercase equivalents.</t>
+          <t hangText='Casemapping:'>Map uppercase and titlecase code points to their lowercase equivalents.</t>
           <t hangText='Normalization:'>NFC.</t>
           <t hangText='Specification:'>RFC &rfc.number;.</t>
         </list>
@@ -216,18 +217,18 @@
 <reference anchor='FRAMEWORK'>
 <front>
 <title>Precis Framework: Handling Internationalized Strings in Protocols</title>
-<author initials='M' surname='Blanchet' fullname='Marc Blanchet'>
-    <organization>Viagenie</organization>
-</author>
 <author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
     <organization>Cisco</organization>
 </author>
-<date month='October' day='30' year='2011' />
-<abstract><t>Application protocols that make use of Unicode code points in protocol strings need to prepare such strings in order to perform comparison operations (e.g., for purposes of authentication or authorization).  In general, this problem has been labeled the "preparation and comparison of internationalized strings" or "PRECIS".  This document defines a framework that enables application protocols to prepare various classes of strings in a way that depends on the properties of Unicode code points.  Because this framework does not depend on large tables of Unicode code points as in stringprep (RFC 3454), it is more agile with regard to changes in the underlying Unicode database and thus provides improved flexibility to application protocols.  A specification that uses this framework either can directly use the base string classes defined in this document or can subclass the base string classes as needed.  This framework uses an approach similar to that of the revised internationalized domain names in applications (IDNA) technology (RFC 5890, RFC 5891, RFC 5892, RFC 5893, RFC 5894) and thus adheres to the high-level design goals described in RFC 4690, albeit for application technologies other than the Domain Name System (DNS).  This document obsoletes RFC 3454.</t></abstract>
+<author initials='M' surname='Blanchet' fullname='Marc Blanchet'>
+    <organization>Viagenie</organization>
+</author>
+<date month='August' day='1' year='2012' />
+<abstract><t>Application protocols using Unicode code points in protocol strings need to prepare such strings in order to perform comparison operations (e.g., for purposes of authentication or authorization).  This document defines a framework enabling application protocols to handle various classes of strings in a way that depends on the properties of Unicode code points and that is agile with respect to versions of Unicode; as a result, this framework provides a more sustainable approach to the handling of internationalized strings than the previous framework, known as Stringprep (RFC 3454).  A specification that reuses this framework can either directly use the base string classes or subclass the base string classes as needed.  This framework takes an approach similar to the revised internationalized domain names in applications (IDNA) technology (RFC 5890, RFC 5891, RFC 5892, RFC 5893, RFC 5894) and thus adheres to the high-level design goals described in RFC 4690, albeit for application technologies other than the Domain Name System (DNS).  This document obsoletes RFC 3454.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-ietf-precis-framework-01' />
+<seriesInfo name='Internet-Draft' value='draft-ietf-precis-framework-05' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-ietf-precis-framework-01.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-ietf-precis-framework-05.txt' />
 </reference>
 
 <reference anchor="RFC2119">
@@ -323,18 +324,18 @@ Unicode 3.2 (http://www.unicode.org/reports/tr28/).
 <reference anchor='MAPPINGS'>
 <front>
 <title>Mapping characters for PRECIS classes</title>
-<author initials='Y' surname='Yoneya' fullname='Yoshiro Yoneya'>
+<author initials='Y' surname='YONEYA' fullname='Yoshiro YONEYA'>
     <organization />
 </author>
 <author initials='T' surname='NEMOTO' fullname='Takahiro NEMOTO'>
     <organization />
 </author>
-<date month='February' day='10' year='2012' />
+<date month='July' day='12' year='2012' />
 <abstract><t>Preparation and comparison of internationalized strings ("PRECIS") Framework [I-D.ietf-precis-framework] is defining several classes of strings for preparation and comparison.  In the document, case mapping is defined because many of protocols handle case sensitive or case insensitive string comparison and therefore preparation of string is mandatory.  As described in IDNA mapping [RFC5895] and PRECIS problem statement [I-D.ietf-precis-problem-statement], mappings in internationalized strings are not limited to case, but also width, delimiters and/or other specials are taken into consideration.  This document considers mappings other than case mapping in PRECIS context.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-yoneya-precis-mappings-01' />
+<seriesInfo name='Internet-Draft' value='draft-yoneya-precis-mappings-02' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-yoneya-precis-mappings-01.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-yoneya-precis-mappings-02.txt' />
 </reference>
 
 <reference anchor="RFC3454">
@@ -499,12 +500,14 @@ Unicode 3.2 (http://www.unicode.org/reports/tr28/).
           <t>A single SASLprep algorithm was replaced by two separate algorithms: one for user names and another for passwords.</t>
           <t>The new preparation algorithms use PRECIS instead of a stringprep profile.  The new algorithms work independenctly of Unicode versions.</t>
           <t>As recommended in the PRECIS framwork, changed the Unicode normalization form from NFKC to NFC.</t>
+          <t>Some Unicode code points that were mapped to nothing in RFC 4013 are simply disallowed by PRECIS.</t>
         </list>
       </t>
     </section>
 
     <section title="Acknowledgements" anchor="acks">
       
+      <t>Thanks to Yoshiro YONEYA and Takahiro NEMOTO for their implementation feedback.</t>
       <t>This document borrows some text from RFC 4013 and RFC 6120.</t>
       
     </section>
