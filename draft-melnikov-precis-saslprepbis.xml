@@ -41,7 +41,7 @@
       </address>
     </author>
 
-    <date day="2" month="August" year="2012"/>
+    <date day="6" month="August" year="2012"/>
 
     <area>Applications</area>
     <workgroup>Precis</workgroup>
@@ -51,7 +51,7 @@
     <keyword>SASLprep</keyword>
 
     <abstract>
-      <t>This document describes how to prepare Unicode strings representing simple user names and user secrets, primarily for purposes of comparison.  This profile is intended to be used by Simple Authentication and Security Layer (SASL) mechanisms (such as PLAIN and SCRAM-SHA-1), as well as other protocols that exchange simple user names or user secrets.  This document obsoletes RFC 4013.</t>
+      <t>This document describes how to handle Unicode strings representing simple user names and user secrets, primarily for purposes of comparison.  This profile is intended to be used by Simple Authentication and Security Layer (SASL) mechanisms (such as PLAIN and SCRAM-SHA-1), as well as other protocols that exchange simple user names or user secrets.  This document obsoletes RFC 4013.</t>
     </abstract>
 
   </front>
@@ -63,13 +63,13 @@
     <section title="Overview" anchor="overview">
       <t>The use of simple user names and user secrets in authentication and authorization is pervasive on the Internet.  To increase the likelihood that the input and comparison of user names and user secrets will work in ways that make sense for typical users throughout the world, this document defines rules for preparing and comparing internationalized strings that represent simple user names and user secrets.</t>
       <t>The algorithms defined in this document assume that all strings are comprised of characters from the Unicode character set <xref target="UNICODE"/>.</t>
-      <t>The algorithms are designed for use in Simple Authentication and Security Layer (SASL) <xref target="RFC4422"/> mechanisms, such as PLAIN <xref target="RFC4616"/> and SCRAM-SHA-1 <xref target="RFC5802"/>.  They can be applicable where simple user names and user secrets are used.  This profile is not intended for use in preparing strings that are not simple user names (e.g., email addresses, DNS domain names, LDAP distinguished names), nor in cases where identifiers or secrets are not character data or require different handling (e.g., case folding).</t>
+      <t>The algorithms are designed for use in Simple Authentication and Security Layer (SASL) <xref target="RFC4422"/> mechanisms, such as PLAIN <xref target="RFC4616"/> and SCRAM-SHA-1 <xref target="RFC5802"/>.  However, they might be applicable wherever simple user names or user secrets are used.  This profile is not intended for use in preparing strings that are not simple user names (e.g., email addresses, DNS domain names, LDAP distinguished names), nor in cases where identifiers or secrets are not character data or require different handling (e.g., case folding).</t>
       <t>This document builds upon the PRECIS framework defined in <xref target='FRAMEWORK'/>, which differs fundamentally from the stringprep technology <xref target='RFC3454'/> used in SASLprep <xref target='RFC4013'/>.  The primary difference is that stringprep profiles allowed all characters except those which were explicitly disallowed, whereas PRECIS profiles disallow all characters except those which are explicitly allowed (this "inclusion model" was originally used for internationalized domain names in <xref target='RFC5891'/>; see <xref target='RFC5894'/> for further discussion).  It is important to keep this distinction in mind when comparing the technology defined in this document to SASLprep <xref target='RFC4013'/>.</t>
       <t>This document obsoletes RFC 4013.</t>
     </section>
 
     <section title="Terminology" anchor="terms">
-      <t>Many important terms used in this document are defined in <xref target='FRAMEWORK'/>, <xref target='RFC4422'/>, <xref target='RFC5890'/>, <xref target='RFC6365'/>, and <xref target='UNICODE'/>.</t>
+      <t>Many important terms used in this document are defined in <xref target='FRAMEWORK'/>, <xref target='RFC4422'/>, <xref target='RFC5890'/>, <xref target='RFC6365'/>, and <xref target='UNICODE'/>.  The term "non-ASCII" space refers to any Unicode code point with a general category of "Zs", with the exception of U+0020 (here called "ASCII space").</t>
       <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in <xref target='RFC2119'/>.</t>
     </section>
 
@@ -95,7 +95,7 @@
       </figure>
     </section>
     <section title='Preparation' anchor='username-preparation'>
-      <t>A simple user name MUST NOT be zero bytes in length.  This rule is to be enforced after any mapping or normalization of code points.</t>
+      <t>A simple user name MUST NOT be zero bytes in length.  This rule is to be enforced after any normalization or mapping of code points.</t>
       <t>Each simplepart of a simple user name MUST be treated as follows, where the operations specified MUST be completed in the order shown:</t>
       <t>
         <list style='numbers'>
@@ -108,7 +108,7 @@
       <t>With regard to directionality, the "Bidi Rule" provided in <xref target='RFC5893'/> applies.</t>
     </section>
     <section title='Migration' anchor='username-migration'>
-      <t>The rules defined in the previous section differ slightly from those defined by the SASLprep specification <xref target='RFC4013'/>.  Therefore, deployments that currently use SASLprep will need to scrub existing data when migrating to use of the PRECIS simplepart subclass.  In particular:</t>
+      <t>The rules defined in the previous section differ slightly from those defined by the SASLprep specification <xref target='RFC4013'/>.  Therefore, deployments that currently use SASLprep for handling user names will need to scrub existing data when migrating to use of the rules defined here.  In particular:</t>
       <t>
         <list style='symbols'>
           <t>SASLprep specified the use of Unicode Normalization Form KC (NFKC), whereas this usage of the PRECIS NameClass employs Unicode Normalization Form C (NFC).  In practice this change is unlikely to cause significant problems, because NFKC provides methods for mapping Unicode code points with compatibility equivalents to those equivalents, whereas the PRECIS NameClass entirely disallows Unicode code points with compatibility equivalents.  For migration purposes, deployments need to search their simple user names for Unicode code points with compatibility equivalents and map those code points to their compatibility equivalents.<vspace blankLines='1'/></t>
@@ -117,7 +117,7 @@
           <t>SASLprep allowed uppercase and titlecase characters, whereas this usage of the PRECIS NameClass maps uppercase and titlecase characters to their lowercase equivalents.  For migration purposes, deployments can either convert uppercase and titlecase characters to their lowercase equivalents in simple user names (thus losing the case information) or preserve uppercase and titlecase characters and ignore the case difference when comparing simple user names.<vspace blankLines='1'/></t>
         </list>
       </t>
-      <t>All code points and blocks not explicitly allowed in the PRECIS NameClass are disallowed; this includes private use characters, surrogate code points, and the other code points and blocks defined as "Prohibited Output" in Section 2.3 of RFC 4013.</t>
+      <t>Note well that all code points and blocks not explicitly allowed in the PRECIS NameClass are disallowed; this includes private use characters, surrogate code points, and the other code points and blocks defined as "Prohibited Output" in Section 2.3 of RFC 4013.</t>
     </section>
   </section>
 
@@ -138,8 +138,8 @@
       </figure>
     </section>
     <section title='Preparation' anchor='secrets-preparation'>
-      <t>A user secret MUST NOT be zero bytes in length.  This rule is to be enforced after any mapping or normalization of code points.</t>
-      <t>Each wordpart of a user secret MUST be treated as follows, where the operations specified MUST be completed in the order shown:</t>
+      <t>A user secret MUST NOT be zero bytes in length.  This rule is to be enforced after any normalization or mapping of code points.</t>
+      <t>A user secret MUST be treated as follows, where the operations specified MUST be completed in the order shown:</t>
       <t>
         <list style='numbers'>
           <t>Apply Unicode Normalization Form C (NFC) to all characters.<vspace blankLines='1'/></t>
@@ -150,30 +150,30 @@
       <t>With regard to directionality, the "Bidi Rule" provided in <xref target='RFC5893'/> applies.</t>
     </section>
     <section title='Migration' anchor='secret-migration'>
-      <t>The rules defined in the previous section differ slightly from those defined by the SASLprep specification <xref target='RFC4013'/>.  In particular:</t>
+      <t>The rules defined in the previous section differ slightly from those defined by the SASLprep specification <xref target='RFC4013'/>.  Depending on local service policy, migration from RFC 4013 to this specification might not involve any scrubbing of data (since user secrets might not be stored in the clear anyway); however, service providers need to be aware of possible issues that might arise during migration.  In particular:</t>
       <t>
         <list style='symbols'>
           <t>SASLprep specified the use of Unicode Normalization Form KC (NFKC), whereas this usage of the PRECIS FreeClass employs Unicode Normalization Form C (NFC).  Because NFKC is more aggressive about finding matches than NFC, in practice this change is unlikely to cause significant problems and indeed will probably result in fewer false positives when comparing user secrets.<vspace blankLines='1'/></t>
-          <t>SASLprep mapped the "characters commonly mapped to nothing" from Appendix B.1 of <xref target='RFC3454'/>) to nothing, whereas the PRECIS FreeClass entirely disallows such characters, which correspond to the code points from the "M" category defined under Section 6.13 of <xref target='FRAMEWORK'/> (with the exception of U+1806 MONGOLIAN TODO SOFT HYPHEN, which was commonly mapped to nothing in Unicode 3.2 but at the time of this writing is allowed by Unicode 6.1).  For migration purposes, deployments need to remove code points from the PRECIS "M" category in user secrets.<vspace blankLines='1'/></t>
+          <t>SASLprep mapped the "characters commonly mapped to nothing" from Appendix B.1 of <xref target='RFC3454'/>) to nothing, whereas the PRECIS FreeClass entirely disallows such characters, which correspond to the code points from the "M" category defined under Section 6.13 of <xref target='FRAMEWORK'/> (with the exception of U+1806 MONGOLIAN TODO SOFT HYPHEN, which was commonly mapped to nothing in Unicode 3.2 but at the time of this writing is allowed by Unicode 6.1).</t>
         </list>
       </t>
-      <t>All code points and blocks not explicitly allowed in the PRECIS FreeClass are disallowed; this includes private use characters, surrogate code points, and the other code points and blocks defined as "Prohibited Output" in Section 2.3 of RFC 4013.</t>
+      <t>Note well that all code points and blocks not explicitly allowed in the PRECIS FreeClass are disallowed; this includes private use characters, surrogate code points, and the other code points and blocks defined as "Prohibited Output" in Section 2.3 of RFC 4013.</t>
     </section>
   </section>
 
   <section title="Open Issues">
-    <t>We need to compare the output obtained when applying the new algorithms to Unicode 3.2 and Unicode 6.1 data to the output obtained when applying SASLprep to Unicode 3.2 data, then make sure that the PRECIS and KITTEN WGs are comfortable with any changes to the Unicode characters that are allowed/disallowed.  See also the migration issues described in the foregoing sections.</t>
+    <t>We need to compare the output obtained when applying the new rules with Unicode 3.2 and Unicode 6.1 data to the output obtained when applying the SASLprep rules with Unicode 3.2 data, then make sure that the PRECIS Working Group and KITTEN Working Group are comfortable with any changes to the Unicode characters that are allowed and disallowed.  (See also the migration issues described in the foregoing sections.)</t>
   </section>
     
   <section title="Security Considerations" anchor="security">
-    <section title="Password Strength" anchor="security-passwords">
-      <t>The ability to include a wide range of characters in passwords is intended to increase the potential for creating a strong password with high entropy.  However, in practice, the ability to include such characters needs to be weighed against the possible need to reproduce those characters on a various devices using various input methods.</t>
+    <section title="Password/Passphrase Strength" anchor="security-passwords">
+      <t>The ability to include a wide range of characters in passwords and passphrases can increase the potential for creating a strong password with high entropy.  However, in practice, the ability to include such characters ought to be weighed against the possible need to reproduce them on various devices using various input methods.</t>
     </section>
     <section title="Reuse of PRECIS" anchor="security-precis">
-      <t>The security considerations described in <xref target="FRAMEWORK"/> apply to the "NameClass" and "FreeClass" base string classes used in this document for user names and passwords, respectively.</t>
+      <t>The security considerations described in <xref target="FRAMEWORK"/> apply to the "NameClass" and "FreeClass" base string classes used in this document for user names and user secrets, respectively.</t>
     </section>
     <section title="Reuse of Unicode" anchor="security-unicode">
-      <t>The security considerations described in <xref target='UTR39'/> apply to the use of Unicode characters in user names and passwords.</t>
+      <t>The security considerations described in <xref target='UTR39'/> apply to the use of Unicode characters in user names and user secrets.</t>
     </section>
   </section>
 
@@ -300,21 +300,14 @@
 <format type='TXT' octets='26359' target='http://www.rfc-editor.org/rfc/rfc5234.txt' />
 </reference>
 
-<reference anchor="UNICODE">
+<reference anchor="UNICODE" target="http://www.unicode.org/versions/Unicode6.1.0/">
   <front>
-    <title>The Unicode Standard, Version 3.2.0</title>
+    <title>The Unicode Standard, Version 6.1</title>
     <author>
       <organization>The Unicode Consortium</organization>
     </author>
-    <date year="2000" />
+    <date year="2012" />
   </front>
-  <annotation>
-    The Unicode Standard, Version 3.2.0 is defined by The Unicode Standard,
-Version 3.0 (Reading, MA, Addison-Wesley, 2000. ISBN 0-201-61633-5), as amended
-by the Unicode Standard Annex #27: Unicode 3.1
-(http://www.unicode.org/reports/tr27/) and by the Unicode Standard Annex #28:
-Unicode 3.2 (http://www.unicode.org/reports/tr28/). 
-  </annotation>
 </reference>
 
     </references>
