@@ -6,7 +6,7 @@
 <?rfc toc="yes"?>
 <?rfc tocdepth="4"?>
 
-<rfc category="std" docName="draft-melnikov-precis-saslprepbis-02" ipr="trust200902" obsoletes="4013">
+<rfc category="std" docName="draft-melnikov-precis-saslprepbis-03" ipr="trust200902" obsoletes="4013">
 
   <front>
 
@@ -41,13 +41,14 @@
       </address>
     </author>
 
-    <date day="13" month="September" year="2012"/>
+    <date day="14" month="September" year="2012"/>
 
     <area>Applications</area>
     <workgroup>Precis</workgroup>
     <keyword>Username</keyword>
     <keyword>Password</keyword>
     <keyword>Unicode</keyword>
+    <keyword>Internationalization</keyword>
     <keyword>SASLprep</keyword>
 
     <abstract>
@@ -148,7 +149,7 @@
           <t>Ensure that the resulting string conforms to the definition of the PRECIS FreeClass.</t>
         </list>
       </t>
-      <t>With regard to directionality, the "Bidi Rule" provided in <xref target='RFC5893'/> applies.</t>
+      <t>With regard to directionality, the "Bidi Rule" (defined in <xref target='RFC5893'/>) and similar rules are unnecessary and inapplicable to passwords, since they can reduce the range of characters that are allowed in a string and therefore reduce the amount of entropy that is possible in a password.  Furthermore, such rules are intended to minimize the possibility that the same string will be displayed differently on a system set for right-to-left display and a system set for left-to-right display; however, passwords are typically not displayed at all and are rarely meant to be interoperable across different systems in the way that non-secret strings like domain names and user names are.</t>
     </section>
     <section title='Migration' anchor='password-migration'>
       <t>The rules defined in the previous section differ slightly from those defined by the SASLprep specification <xref target='RFC4013'/>.  Depending on local service policy, migration from RFC 4013 to this specification might not involve any scrubbing of data (since passwords might not be stored in the clear anyway); however, service providers need to be aware of possible issues that might arise during migration.  In particular:</t>
@@ -501,7 +502,7 @@
 
     <section title="Acknowledgements" anchor="acks">
       
-      <t>Thanks to Yoshiro YONEYA and Takahiro NEMOTO for their implementation feedback.</t>
+      <t>Thanks to Yoshiro YONEYA and Takahiro NEMOTO for implementation feedback.  Thanks also to Marc Blanchet, Joe Hildebrand, Alan DeKok, Simon Josefsson, Jonathan Lennox, Pete Resnick, and Andrew Sullivan for their input regarding the text.</t>
       <t>This document borrows some text from RFC 4013 and RFC 6120.</t>
       
     </section>
